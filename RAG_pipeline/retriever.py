@@ -14,6 +14,7 @@ model = SentenceTransformer("all-MiniLM-L6-v2")
 
 # Step 3: Define a function to retrieve top-k relevant chunks
 def retrieve_relevant_chunks(query, top_k=3):
+    # Encode the query and corpus as tensors
     query_embedding = model.encode(query, convert_to_tensor=True)
     corpus_embeddings = model.encode(text_chunks, convert_to_tensor=True)
 
@@ -21,6 +22,7 @@ def retrieve_relevant_chunks(query, top_k=3):
     hits = util.semantic_search(query_embedding, corpus_embeddings, top_k=top_k)
     hits = hits[0]  # semantic_search returns a list of lists
 
+    # Display the results
     print(f"\nTop {top_k} relevant chunks for query: \"{query}\"")
     for i, hit in enumerate(hits):
         score = hit['score']
