@@ -1,5 +1,4 @@
-langchain
-openai
-chromadb
-unstructured
+openai==0.28
+numpy
+sentence-transformers
 streamlit
