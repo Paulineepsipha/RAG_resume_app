@@ -3,7 +3,9 @@ import numpy as np
 from sentence_transformers import SentenceTransformer, util
 
 # Step 1: Load saved embeddings and text chunks
-with open("embeddings.pkl", "rb") as f:
+embedding_file = r"C:\Users\melvi\Desktop\MONASH STUDY\Personal_project\Ragmodel_chatbot\CODE\RAG_resume_app\RAG_pipeline\embeddings.pkl"
+
+with open(embedding_file, "rb") as f:
     data = pickle.load(f)
 
 text_chunks = data["text_chunks"]

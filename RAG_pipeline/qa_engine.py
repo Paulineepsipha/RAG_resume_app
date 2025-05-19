@@ -1,11 +1,8 @@
-import openai
-import pickle
-import numpy as np
-import os
+import requests
 from sentence_transformers import SentenceTransformer, util
-
-# Set your OpenAI API key (replace with your actual key)
-openai.api_key = " Own_API" 
+import numpy as np
+import pickle
+import json
 
 # Load saved embeddings
 with open("embeddings.pkl", "rb") as f:
@@ -14,15 +11,46 @@ with open("embeddings.pkl", "rb") as f:
 text_chunks = data["text_chunks"]
 embeddings = np.array(data["embeddings"])
 
-# Load the same embedding model
+# Load embedding model
 model = SentenceTransformer("all-MiniLM-L6-v2")
 
+# Embedding-based chunk retrieval
 def retrieve_relevant_chunks(query, top_k=3):
     query_embedding = model.encode(query, convert_to_tensor=True)
     corpus_embeddings = model.encode(text_chunks, convert_to_tensor=True)
     hits = util.semantic_search(query_embedding, corpus_embeddings, top_k=top_k)
     return [text_chunks[hit["corpus_id"]] for hit in hits[0]]
 
+#  Call Ollama API and stream the response correctly
+def call_ollama(prompt, model_name="tinyllama"):
+    try:
+        response = requests.post(
+            "http://localhost:11434/api/chat",
+            json={
+                "model": model_name,
+                "messages": [{"role": "user", "content": prompt}],
+                "stream": True
+            },
+            stream=True
+        )
+        response.raise_for_status()
+
+        answer = ""
+        for line in response.iter_lines():
+            if line:
+                try:
+                    data = json.loads(line.decode("utf-8"))
+                    content = data.get("message", {}).get("content", "")
+                    answer += content
+                except json.JSONDecodeError:
+                    print(f"Warning: Could not parse line: {line}")
+        return answer.strip()
+
+    except requests.exceptions.RequestException as e:
+        return f"Ollama request failed: {e}"
+
+
+# Generate an answer using RAG
 def generate_answer(query, top_k=3):
     relevant_chunks = retrieve_relevant_chunks(query, top_k=top_k)
     context = "\n\n".join(relevant_chunks)
@@ -36,15 +64,10 @@ Question: {query}
 
 Answer:"""
 
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",  # Or use "gpt-4" if you have access to it
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.3,
-        max_tokens=300,
-    )
+    response = call_ollama(prompt)
+    return response if response else "No response generated."
 
-    return response['choices'][0]['message']['content'].strip()
-
+# === INTERFACE ===
 if __name__ == "__main__":
     while True:
         user_query = input("Ask a question (or 'exit' to quit): ")
