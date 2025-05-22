@@ -3,6 +3,11 @@ from sentence_transformers import SentenceTransformer, util
 import numpy as np
 import pickle
 import json
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
 
 # Load saved embeddings
 with open("embeddings.pkl", "rb") as f:
@@ -21,34 +26,29 @@ def retrieve_relevant_chunks(query, top_k=3):
     hits = util.semantic_search(query_embedding, corpus_embeddings, top_k=top_k)
     return [text_chunks[hit["corpus_id"]] for hit in hits[0]]
 
-#  Call Ollama API and stream the response correctly
-def call_ollama(prompt, model_name="tinyllama"):
+# Call DeepSeek API
+def call_deepseek_api(prompt, model="deepseek-chat"):
+    url = "https://api.deepseek.com/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    payload = {
+        "model": model,
+        "messages": [
+            {"role": "system", "content": "You are a helpful assistant. Use the provided context to answer questions accurately."},
+            {"role": "user", "content": prompt}
+        ]
+    }
+
     try:
-        response = requests.post(
-            "http://localhost:11434/api/chat",
-            json={
-                "model": model_name,
-                "messages": [{"role": "user", "content": prompt}],
-                "stream": True
-            },
-            stream=True
-        )
+        response = requests.post(url, headers=headers, json=payload)
         response.raise_for_status()
-
-        answer = ""
-        for line in response.iter_lines():
-            if line:
-                try:
-                    data = json.loads(line.decode("utf-8"))
-                    content = data.get("message", {}).get("content", "")
-                    answer += content
-                except json.JSONDecodeError:
-                    print(f"Warning: Could not parse line: {line}")
-        return answer.strip()
-
+        return response.json()["choices"][0]["message"]["content"].strip()
     except requests.exceptions.RequestException as e:
-        return f"Ollama request failed: {e}"
-
+        print(f"DeepSeek API call failed: {e}")
+        return "Error: Could not get response from DeepSeek."
 
 # Generate an answer using RAG
 def generate_answer(query, top_k=3):
@@ -64,8 +64,7 @@ Question: {query}
 
 Answer:"""
 
-    response = call_ollama(prompt)
-    return response if response else "No response generated."
+    return call_deepseek_api(prompt)
 
 # === INTERFACE ===
 if __name__ == "__main__":

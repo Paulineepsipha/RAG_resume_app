@@ -27,7 +27,7 @@ from RAG_pipeline.embedder import embed_chunks
 from save_embeddings import save_embeddings_pickle
 
 # 1. Load PDF
-text = load_pdf(r"C:\Users\melvi\Desktop\MONASH STUDY\Personal_project\Ragmodel_chatbot\CODE\RAG_resume_app\Data\dgsaustralia_data.pdf")
+text = load_pdf(r"C:\Users\melvi\Desktop\MONASH STUDY\Personal_project\Ragmodel_chatbot\CODE\RAG_resume_app\Data\monopoly.pdf")
 
 # 2. Chunk it
 chunks = chunk_text(text)

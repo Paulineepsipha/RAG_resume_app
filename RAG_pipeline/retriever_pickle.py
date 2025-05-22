@@ -3,7 +3,7 @@ import numpy as np
 from sentence_transformers import SentenceTransformer, util
 
 # Step 1: Load saved embeddings and text chunks
-embedding_file = r"C:\Users\melvi\Desktop\MONASH STUDY\Personal_project\Ragmodel_chatbot\CODE\RAG_resume_app\RAG_pipeline\embeddings.pkl"
+embedding_file = r"C:\Users\melvi\Desktop\MONASH STUDY\Personal_project\Ragmodel_chatbot\CODE\RAG_resume_app\embeddings.pkl"
 
 with open(embedding_file, "rb") as f:
     data = pickle.load(f)
