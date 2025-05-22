@@ -1,10 +1,11 @@
 import chromadb
+from chromadb.config import Settings
 from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunction
 
 persist_dir = "chroma_db"
 
 def save_to_chromadb(text_chunks, collection_name="rag_resume"):
-    client = chromadb.Client(persist_directory=persist_dir)
+    client = chromadb.PersistentClient(path=persist_dir)
 
     # Optional: Clear existing collection
     if collection_name in [c.name for c in client.list_collections()]:
